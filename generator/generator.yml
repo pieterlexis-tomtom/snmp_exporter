@@ -4,6 +4,14 @@ auths:
     version: 1
   public_v2:
     version: 2
+  mi_grafana_v3:
+    version: 3
+    security_level: authPriv
+    auth_protocol: SHA
+    username: '{{ lookup("env", "INFOBLOX_SNMP_USERNAME") }}'
+    password: '{{ lookup("env", "INFOBLOX_SNMP_PASSWORD") }}'
+    priv_protocol: AES
+    priv_password: '{{ lookup("env", "INFOBLOX_SNMP_PRIV_PASSWORD") }}'
 
 modules:
   # Default IF-MIB interfaces table with ifIndex.
@@ -909,3 +917,59 @@ modules:
     - 1.3.6.1.4.1.9.9.719.1.45.1.1.6  #cucsStorageControllerOperState
     - 1.3.6.1.4.1.9.9.719.1.1.1.1.11  #cucsFaultDescription
     - 1.3.6.1.4.1.9.9.719.1.1.1.1.20  #cucsFaultSeverity
+
+  infobloxIBDNSServ:
+    walk:
+      - 1.3.6.1.4.1.32
+
+  infobloxIBDHCPServ:
+    walk:
+      - 1.3.6.1.4.1.9999
+
+  infobloxIBOne:
+    timeout: 60s
+    walk:
+      - ibClusterReplicationStatusEntry
+      - ibDDNSUpdateStatistics
+      - ibMemberNodeServiceStatusEntry
+      - ibMemberServiceStatusEntry
+      - ibNetworkMonitorDNS
+      - ibNodeServiceStatus
+      - ibPassiveNodeServiceStatus
+      - ibServiceStatus
+      - ibSystemMonitorCpu
+      - ibSystemMonitorMem
+      - ibSystemMonitorSnic
+    overrides:
+      ibNodeIPAddress:
+        type: DisplayString
+      ibDHCPSubnetNetworkAddress:
+        type: DisplayString
+      ibDHCPSubnetNetworkMask:
+        type: DisplayString
+
+      # These OIDs don't actually have interesting data, but they point to enum indixes with a string.
+      # These strings should end up in labels, not the enum index integer
+      ibServiceName:
+        ignore: true
+        type: EnumAsInfo
+      ibPassiveNodeServiceName:
+        ignore: true
+        type: EnumAsInfo
+      ibNodeServiceName:
+        ignore: true
+        type: EnumAsInfo
+      ibSnicName1:
+        ignore: true
+        type: EnumAsInfo
+      ibSnicName5:
+        ignore: true
+        type: EnumAsInfo
+
+      # These statuses will be split into their specific statuses as a label("Active", etc.) instead of the number.
+      ibNodeServiceStatus:
+        type: EnumAsStateSet
+      ibPassiveNodeServiceStatus:
+        type: EnumAsStateSet
+      ibServiceStatus:
+        type: EnumAsStateSet
